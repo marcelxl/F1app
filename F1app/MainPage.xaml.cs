@@ -18,4 +18,17 @@ public partial class MainPage : ContentPage
         base.OnAppearing();
         await _vm.InitializeAsync();
     }
+
+    private void OnJumpToCurrentRaceClicked(object? sender, EventArgs e)
+    {
+        if (_vm.ActiveRaceIndex >= 0)
+        {
+            RaceCarousel.ScrollTo(_vm.ActiveRaceIndex, animate: true);
+        }
+    }
+
+    private void OnCarouselPositionChanged(object? sender, PositionChangedEventArgs e)
+    {
+        _vm.SelectWeekendAt(e.CurrentPosition);
+    }
 }

@@ -7,7 +7,7 @@ public class F1Service
 {
     private readonly HttpClient _httpClient = new();
 
-    public async Task<List<F1Weekend>> GetUpcomingWeekendsAsync()
+    public async Task<List<F1Weekend>> GetCurrentSeasonWeekendsAsync()
     {
         var url = "https://api.jolpi.ca/ergast/f1/current.json";
         var response = await _httpClient.GetFromJsonAsync<JolpicaResponse>(url);
@@ -20,10 +20,6 @@ public class F1Service
         foreach (var r in response.MRData.RaceTable.Races)
         {
             var raceStart = ParseUtc(r.Date, r.Time);
-            // We beschouwen het weekend voorbij 4 uur na de start van de hoofdrace
-            if (raceStart.AddHours(4) < DateTime.UtcNow)
-                continue;
-
             var weekend = new F1Weekend
             {
                 Round = r.Round,
@@ -50,8 +46,7 @@ public class F1Service
             weekends.Add(weekend);
         }
 
-        // Neem alleen het eerstvolgende (of huidige) en het daaropvolgende weekend
-        return weekends.Take(2).ToList();
+        return weekends;
     }
 
     private static void AddSession(List<F1Session> list, string name, SessionDto? dto)

@@ -1,0 +1,11 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": ".NET MAUI Android (Emulator)",
+      "type": "maui",
+      "request": "launch",
+      "project": "${workspaceFolder}/F1app/F1app.csproj"
+    }
+  ]
+}

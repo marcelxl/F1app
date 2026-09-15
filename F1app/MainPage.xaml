@@ -17,8 +17,11 @@
 
         <!-- Swipe view voor raceweekenden -->
         <CarouselView Grid.Row="0"
+                      x:Name="RaceCarousel"
                       ItemsSource="{Binding Weekends}"
+                      CurrentItem="{Binding CurrentWeekend, Mode=TwoWay}"
                       IndicatorView="WeekendIndicator"
+                      PositionChanged="OnCarouselPositionChanged"
                       Loop="False">
             <CarouselView.ItemTemplate>
                 <DataTemplate x:DataType="models:F1Weekend">
@@ -100,7 +103,7 @@
                                 </VerticalStackLayout>
                             </Border>
 
-                            <Label Text="← Swipe voor volgende race →" 
+                            <Label Text="◂ Swipe voor vorige | volgende ▸" 
                                    TextColor="#555555" 
                                    FontSize="12" 
                                    HorizontalOptions="Center" 
@@ -111,6 +114,21 @@
                 </DataTemplate>
             </CarouselView.ItemTemplate>
         </CarouselView>
+
+        <Button Grid.Row="0"
+            Text="🎯 Huidige race"
+                IsVisible="{Binding IsJumpToCurrentRaceVisible}"
+                Clicked="OnJumpToCurrentRaceClicked"
+                Background="#E10600"
+                TextColor="White"
+                FontAttributes="Bold"
+                FontSize="12"
+                CornerRadius="22"
+                Padding="22,0"
+                HeightRequest="44"
+                HorizontalOptions="Center"
+                VerticalOptions="End"
+                Margin="0,0,0,18" />
 
         <!-- Swipe indicators -->
         <IndicatorView x:Name="WeekendIndicator"

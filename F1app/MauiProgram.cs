@@ -1,5 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 
+#if MAUI_DEVFLOW
+using Microsoft.Maui.DevFlow.Agent;
+#endif
+
 namespace F1app
 {
     public static class MauiProgram
@@ -14,6 +18,10 @@ namespace F1app
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
+
+#if MAUI_DEVFLOW
+            builder.AddMauiDevFlowAgent();
+#endif
 
 #if DEBUG
     		builder.Logging.AddDebug();
