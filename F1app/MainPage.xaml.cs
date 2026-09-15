@@ -1,4 +1,6 @@
-﻿using F1app.ViewModels;
+﻿using System.Diagnostics;
+using F1app.Models;
+using F1app.ViewModels;
 
 namespace F1app;
 
@@ -8,27 +10,75 @@ public partial class MainPage : ContentPage
 
     public MainPage()
     {
-        InitializeComponent();
         _vm = new MainViewModel();
-        BindingContext = _vm;
+        try
+        {
+            InitializeComponent();
+            BindingContext = _vm;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"MainPage initialization failed: {ex}");
+        }
     }
 
     protected override async void OnAppearing()
     {
-        base.OnAppearing();
-        await _vm.InitializeAsync();
+        try
+        {
+            base.OnAppearing();
+            await _vm.InitializeAsync();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"MainPage appearing failed: {ex}");
+        }
     }
 
     private void OnJumpToCurrentRaceClicked(object? sender, EventArgs e)
     {
-        if (_vm.ActiveRaceIndex >= 0)
+        try
         {
-            RaceCarousel.ScrollTo(_vm.ActiveRaceIndex, animate: true);
+            if (_vm.ActiveRaceIndex >= 0)
+            {
+                RaceCarousel.ScrollTo(_vm.ActiveRaceIndex, animate: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Race navigation failed: {ex}");
         }
     }
 
     private void OnCarouselPositionChanged(object? sender, PositionChangedEventArgs e)
     {
-        _vm.SelectWeekendAt(e.CurrentPosition);
+        try
+        {
+            _vm.SelectWeekendAt(e.CurrentPosition);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Carousel position update failed: {ex}");
+        }
+    }
+
+    private void OnRaceIndicatorTapped(object? sender, TappedEventArgs e)
+    {
+        try
+        {
+            if (sender is TapGestureRecognizer gesture &&
+                gesture.BindingContext is F1Weekend weekend)
+            {
+                var index = _vm.Weekends.IndexOf(weekend);
+                if (index >= 0 && index < _vm.Weekends.Count)
+                {
+                    RaceCarousel.ScrollTo(index, animate: true);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Race indicator navigation failed: {ex}");
+        }
     }
 }

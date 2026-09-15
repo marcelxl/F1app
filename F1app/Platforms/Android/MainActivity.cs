@@ -1,5 +1,7 @@
 ﻿using Android.App;
 using Android.Content.PM;
+using Android.OS;
+using Android.Views;
 
 namespace F1app;
 
@@ -9,4 +11,15 @@ namespace F1app;
           ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
 public class MainActivity : MauiAppCompatActivity
 {
+    protected override void OnCreate(Bundle? savedInstanceState)
+    {
+        base.OnCreate(savedInstanceState);
+
+        if (!OperatingSystem.IsAndroidVersionAtLeast(35))
+        {
+            Window?.SetStatusBarColor(Android.Graphics.Color.ParseColor("#121212"));
+            Window?.SetNavigationBarColor(Android.Graphics.Color.ParseColor("#121212"));
+        }
+        Window?.SetSoftInputMode(SoftInput.AdjustResize);
+    }
 }

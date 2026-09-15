@@ -5,46 +5,75 @@
              xmlns:viewmodels="clr-namespace:F1app.ViewModels"
              x:Class="F1app.MainPage"
              x:DataType="viewmodels:MainViewModel"
+             Shell.NavBarIsVisible="False"
              BackgroundColor="#121212">
 
-    <Grid RowDefinitions="*, Auto">
-        <!-- Laad-animatie -->
+    <Grid RowDefinitions="*, Auto, Auto">
         <ActivityIndicator IsRunning="{Binding IsBusy}"
                            IsVisible="{Binding IsBusy}"
                            HorizontalOptions="Center"
                            VerticalOptions="Center"
                            Color="#E10600" />
 
-        <!-- Swipe view voor raceweekenden -->
         <CarouselView Grid.Row="0"
                       x:Name="RaceCarousel"
+                      HorizontalOptions="Fill"
                       ItemsSource="{Binding Weekends}"
                       CurrentItem="{Binding CurrentWeekend, Mode=TwoWay}"
-                      IndicatorView="WeekendIndicator"
                       PositionChanged="OnCarouselPositionChanged"
+                      PeekAreaInsets="0"
                       Loop="False">
+            <CarouselView.ItemsLayout>
+                <LinearItemsLayout Orientation="Horizontal"
+                                   ItemSpacing="0"
+                                   SnapPointsType="MandatorySingle"
+                                   SnapPointsAlignment="Center" />
+            </CarouselView.ItemsLayout>
             <CarouselView.ItemTemplate>
                 <DataTemplate x:DataType="models:F1Weekend">
-                    <ScrollView>
-                        <VerticalStackLayout Padding="24" Spacing="16">
+                    <ScrollView HorizontalOptions="Fill"
+                                VerticalOptions="Start">
+                        <VerticalStackLayout Padding="20,16,20,104"
+                                             Spacing="18"
+                                             VerticalOptions="Start"
+                                             HorizontalOptions="Fill">
 
-                            <!-- Koptekst: Ronde & GP -->
                             <VerticalStackLayout Spacing="2">
+                                <Border Background="#2A2A2E"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 8"
+                                        Padding="8,4"
+                                        HorizontalOptions="Start">
+                                    <HorizontalStackLayout Spacing="6">
+                                        <Label Text="{Binding CountryFlag}"
+                                               FontSize="16"
+                                               VerticalOptions="Center" />
+                                        <Label Text="{Binding CountryName}"
+                                               TextColor="#D0D0D0"
+                                               FontAttributes="Bold"
+                                               FontSize="11"
+                                               VerticalOptions="Center" />
+                                    </HorizontalStackLayout>
+                                </Border>
                                 <Label Text="{Binding Round, StringFormat='RONDE {0}'}" 
                                        TextColor="#E10600" 
                                        FontAttributes="Bold" 
                                        FontSize="13" 
-                                       CharacterSpacing="1" />
-                                <Label Text="{Binding GrandPrixName}" 
-                                       TextColor="White" 
-                                       FontAttributes="Bold" 
-                                       FontSize="26" />
+                                       CharacterSpacing="2"
+                                       TextTransform="Uppercase" />
+                                    <Label Text="{Binding GrandPrixName}" 
+                                        TextColor="White" 
+                                        FontAttributes="Bold" 
+                                        FontSize="26"
+                                        LineBreakMode="WordWrap"
+                                        MaxLines="2"
+                                        HeightRequest="64"
+                                        VerticalTextAlignment="Center" />
                                 <Label Text="{Binding CircuitName}" 
                                        TextColor="#A0A0A0" 
                                        FontSize="15" />
                             </VerticalStackLayout>
 
-                            <!-- Uitzendinfo card -->
                             <Border StrokeShape="RoundRectangle 10" 
                                     BackgroundColor="#1E1E1E" 
                                     StrokeThickness="0" 
@@ -58,39 +87,76 @@
                                 </HorizontalStackLayout>
                             </Border>
 
-                            <!-- Sessies container -->
-                            <Border StrokeShape="RoundRectangle 12" 
+                            <Border
                                     BackgroundColor="#1A1A1A" 
                                     StrokeThickness="1" 
                                     Stroke="#2A2A2A" 
-                                    Padding="16">
-                                <VerticalStackLayout Spacing="12">
+                                    Padding="20,18"
+                                    StrokeShape="RoundRectangle 16">
+                                <VerticalStackLayout Spacing="10">
                                     <Label Text="PROGRAMMA (NEDERLANDSE TIJD)" 
                                            FontSize="12" 
                                            TextColor="#777777" 
                                            FontAttributes="Bold" 
                                            Margin="0,0,0,4" />
 
-                                    <!-- BindableLayout toont de sessies direct in de ScrollView -->
-                                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Sessions}" Spacing="8">
+                                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Sessions}" Spacing="14">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="models:F1Session">
-                                                <Grid ColumnDefinitions="*, Auto, Auto" Padding="0,4">
+                                                <Grid ColumnDefinitions="*, Auto, Auto, Auto"
+                                                    RowSpacing="14"
+                                                    Padding="0,7">
+                                                    <Grid.Triggers>
+                                                        <DataTrigger TargetType="Grid" Binding="{Binding IsPast}" Value="True">
+                                                            <Setter Property="Opacity" Value="0.45" />
+                                                        </DataTrigger>
+                                                    </Grid.Triggers>
                                                     <Label Text="{Binding Name}" 
                                                            TextColor="White" 
-                                                           FontSize="15" 
+                                                           FontSize="14" 
                                                            VerticalOptions="Center" />
                                                     <Label Grid.Column="1" 
                                                            Text="{Binding FormattedDay}" 
                                                            TextColor="#8E8E93" 
-                                                           FontSize="13" 
+                                                           FontSize="12" 
                                                            VerticalOptions="Center" 
-                                                           Margin="0,0,10,0" />
-                                                    <Border Grid.Column="2" 
+                                                           Margin="8,0,8,0" />
+                                                    <HorizontalStackLayout Grid.Column="2"
+                                                                           Spacing="4"
+                                                                           VerticalOptions="Center"
+                                                                           Margin="0,0,8,0">
+                                                        <HorizontalStackLayout IsVisible="{Binding IsLive}" Spacing="4">
+                                                            <Ellipse Fill="#3DDC84"
+                                                                     WidthRequest="7"
+                                                                     HeightRequest="7"
+                                                                     VerticalOptions="Center" />
+                                                            <Label Text="LIVE"
+                                                                   TextColor="#3DDC84"
+                                                                   FontAttributes="Bold"
+                                                                   FontSize="10"
+                                                                   VerticalOptions="Center" />
+                                                        </HorizontalStackLayout>
+                                                        <Border IsVisible="{Binding IsNext}"
+                                                                Background="#E10600"
+                                                                StrokeThickness="0"
+                                                                StrokeShape="RoundRectangle 5"
+                                                                Padding="5,2">
+                                                            <Label Text="NEXT"
+                                                                   TextColor="White"
+                                                                   FontAttributes="Bold"
+                                                                   FontSize="9" />
+                                                        </Border>
+                                                    </HorizontalStackLayout>
+                                                    <Border Grid.Column="3" 
                                                             StrokeShape="RoundRectangle 6" 
                                                             BackgroundColor="#2C2C2E" 
-                                                            Padding="8,4" 
+                                                            Padding="8,3" 
                                                             StrokeThickness="0">
+                                                        <Border.Triggers>
+                                                            <DataTrigger TargetType="Border" Binding="{Binding IsNext}" Value="True">
+                                                                <Setter Property="Background" Value="#E10600" />
+                                                            </DataTrigger>
+                                                        </Border.Triggers>
                                                         <Label Text="{Binding FormattedTime}" 
                                                                TextColor="#FFFFFF" 
                                                                FontAttributes="Bold" 
@@ -115,8 +181,8 @@
             </CarouselView.ItemTemplate>
         </CarouselView>
 
-        <Button Grid.Row="0"
-            Text="🎯 Huidige race"
+        <Button Grid.Row="1"
+                Text="{Binding ReturnButtonText}"
                 IsVisible="{Binding IsJumpToCurrentRaceVisible}"
                 Clicked="OnJumpToCurrentRaceClicked"
                 Background="#E10600"
@@ -128,14 +194,37 @@
                 HeightRequest="44"
                 HorizontalOptions="Center"
                 VerticalOptions="End"
-                Margin="0,0,0,18" />
+                Margin="0,0,0,32" />
 
-        <!-- Swipe indicators -->
-        <IndicatorView x:Name="WeekendIndicator"
-                       Grid.Row="1"
-                       IndicatorColor="#444444"
-                       SelectedIndicatorColor="#E10600"
-                       HorizontalOptions="Center"
-                       Padding="0,0,0,16" />
+            <HorizontalStackLayout Grid.Row="2"
+                               HorizontalOptions="Center"
+                               Padding="0,0,0,16"
+                               BindableLayout.ItemsSource="{Binding Weekends}"
+                           Spacing="6">
+            <BindableLayout.ItemTemplate>
+                <DataTemplate x:DataType="models:F1Weekend">
+                        <Border WidthRequest="6"
+                            HeightRequest="6"
+                            StrokeThickness="1"
+                            Stroke="#404040"
+                            Background="#404040"
+                            StrokeShape="RoundRectangle 3">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnRaceIndicatorTapped" />
+                        </Border.GestureRecognizers>
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsActiveSeasonRace}" Value="True">
+                                <Setter Property="Background" Value="#00FF7F" />
+                                <Setter Property="Stroke" Value="#00FF7F" />
+                            </DataTrigger>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                <Setter Property="Background" Value="#E10600" />
+                                <Setter Property="Stroke" Value="#E10600" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                    </Border>
+                </DataTemplate>
+            </BindableLayout.ItemTemplate>
+        </HorizontalStackLayout>
     </Grid>
 </ContentPage>
