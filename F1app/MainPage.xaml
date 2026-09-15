@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:F1app.Models"
+             xmlns:viewmodels="clr-namespace:F1app.ViewModels"
+             x:Class="F1app.MainPage"
+             x:DataType="viewmodels:MainViewModel"
+             BackgroundColor="#121212">
+
+    <Grid RowDefinitions="*, Auto">
+        <!-- Laad-animatie -->
+        <ActivityIndicator IsRunning="{Binding IsBusy}"
+                           IsVisible="{Binding IsBusy}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           Color="#E10600" />
+
+        <!-- Swipe view voor raceweekenden -->
+        <CarouselView Grid.Row="0"
+                      ItemsSource="{Binding Weekends}"
+                      IndicatorView="WeekendIndicator"
+                      Loop="False">
+            <CarouselView.ItemTemplate>
+                <DataTemplate x:DataType="models:F1Weekend">
+                    <ScrollView>
+                        <VerticalStackLayout Padding="24" Spacing="16">
+
+                            <!-- Koptekst: Ronde & GP -->
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="{Binding Round, StringFormat='RONDE {0}'}" 
+                                       TextColor="#E10600" 
+                                       FontAttributes="Bold" 
+                                       FontSize="13" 
+                                       CharacterSpacing="1" />
+                                <Label Text="{Binding GrandPrixName}" 
+                                       TextColor="White" 
+                                       FontAttributes="Bold" 
+                                       FontSize="26" />
+                                <Label Text="{Binding CircuitName}" 
+                                       TextColor="#A0A0A0" 
+                                       FontSize="15" />
+                            </VerticalStackLayout>
+
+                            <!-- Uitzendinfo card -->
+                            <Border StrokeShape="RoundRectangle 10" 
+                                    BackgroundColor="#1E1E1E" 
+                                    StrokeThickness="0" 
+                                    Padding="14,10">
+                                <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                                    <Label Text="📺" FontSize="16" VerticalOptions="Center" />
+                                    <Label Text="{Binding Broadcaster, StringFormat='NL Uitzending: {0}'}" 
+                                           TextColor="#DDDDDD" 
+                                           FontSize="13" 
+                                           VerticalOptions="Center" />
+                                </HorizontalStackLayout>
+                            </Border>
+
+                            <!-- Sessies container -->
+                            <Border StrokeShape="RoundRectangle 12" 
+                                    BackgroundColor="#1A1A1A" 
+                                    StrokeThickness="1" 
+                                    Stroke="#2A2A2A" 
+                                    Padding="16">
+                                <VerticalStackLayout Spacing="12">
+                                    <Label Text="PROGRAMMA (NEDERLANDSE TIJD)" 
+                                           FontSize="12" 
+                                           TextColor="#777777" 
+                                           FontAttributes="Bold" 
+                                           Margin="0,0,0,4" />
+
+                                    <!-- BindableLayout toont de sessies direct in de ScrollView -->
+                                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Sessions}" Spacing="8">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="models:F1Session">
+                                                <Grid ColumnDefinitions="*, Auto, Auto" Padding="0,4">
+                                                    <Label Text="{Binding Name}" 
+                                                           TextColor="White" 
+                                                           FontSize="15" 
+                                                           VerticalOptions="Center" />
+                                                    <Label Grid.Column="1" 
+                                                           Text="{Binding FormattedDay}" 
+                                                           TextColor="#8E8E93" 
+                                                           FontSize="13" 
+                                                           VerticalOptions="Center" 
+                                                           Margin="0,0,10,0" />
+                                                    <Border Grid.Column="2" 
+                                                            StrokeShape="RoundRectangle 6" 
+                                                            BackgroundColor="#2C2C2E" 
+                                                            Padding="8,4" 
+                                                            StrokeThickness="0">
+                                                        <Label Text="{Binding FormattedTime}" 
+                                                               TextColor="#FFFFFF" 
+                                                               FontAttributes="Bold" 
+                                                               FontSize="13" />
+                                                    </Border>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Label Text="← Swipe voor volgende race →" 
+                                   TextColor="#555555" 
+                                   FontSize="12" 
+                                   HorizontalOptions="Center" 
+                                   Margin="0,12,0,0" />
+
+                        </VerticalStackLayout>
+                    </ScrollView>
+                </DataTemplate>
+            </CarouselView.ItemTemplate>
+        </CarouselView>
+
+        <!-- Swipe indicators -->
+        <IndicatorView x:Name="WeekendIndicator"
+                       Grid.Row="1"
+                       IndicatorColor="#444444"
+                       SelectedIndicatorColor="#E10600"
+                       HorizontalOptions="Center"
+                       Padding="0,0,0,16" />
+    </Grid>
+</ContentPage>
