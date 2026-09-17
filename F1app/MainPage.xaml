@@ -15,6 +15,15 @@
                            VerticalOptions="Center"
                            Color="#E10600" />
 
+         <Label Grid.Row="0"
+             Text="Offline modus"
+             IsVisible="{Binding IsOfflineMode}"
+             HorizontalOptions="End"
+             VerticalOptions="Start"
+             Margin="0,12,16,0"
+             TextColor="#8E8E93"
+             FontSize="11" />
+
         <CarouselView Grid.Row="0"
                       x:Name="RaceCarousel"
                       HorizontalOptions="Fill"

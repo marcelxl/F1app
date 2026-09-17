@@ -11,15 +11,8 @@ public partial class MainPage : ContentPage
     public MainPage()
     {
         _vm = new MainViewModel();
-        try
-        {
-            InitializeComponent();
-            BindingContext = _vm;
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"MainPage initialization failed: {ex}");
-        }
+        InitializeComponent();
+        BindingContext = _vm;
     }
 
     protected override async void OnAppearing()
@@ -27,11 +20,24 @@ public partial class MainPage : ContentPage
         try
         {
             base.OnAppearing();
-            await _vm.InitializeAsync();
+            await Task.Yield();
+            _ = InitializeViewModelAsync();
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"MainPage appearing failed: {ex}");
+        }
+    }
+
+    private async Task InitializeViewModelAsync()
+    {
+        try
+        {
+            await _vm.InitializeAsync();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"MainPage data initialization failed: {ex}");
         }
     }
 

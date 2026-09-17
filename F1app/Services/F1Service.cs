@@ -1,29 +1,55 @@
 ﻿using System.Diagnostics;
 using System.Net.Http.Json;
+using System.Text.Json;
 using F1app.Models;
 
 namespace F1app.Services;
 
 public class F1Service
 {
-    private readonly HttpClient _httpClient = new();
-
-    public async Task<List<F1Weekend>> GetCurrentSeasonWeekendsAsync()
+    private const string CacheFileName = "f1_schedule_cache.json";
+    private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        var url = "https://api.jolpi.ca/ergast/f1/current.json";
-        JolpicaResponse? response;
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = false
+    };
+
+    private readonly HttpClient _httpClient = new()
+    {
+        Timeout = TimeSpan.FromSeconds(3)
+    };
+
+    public async Task<List<F1Weekend>> LoadCachedWeekendsAsync(CancellationToken cancellationToken = default)
+    {
         try
         {
-            response = await _httpClient.GetFromJsonAsync<JolpicaResponse>(url);
+            var cachePath = Path.Combine(FileSystem.Current.AppDataDirectory, CacheFileName);
+            var json = await File.ReadAllTextAsync(cachePath, cancellationToken).ConfigureAwait(false);
+            return await Task.Run(
+                () => JsonSerializer.Deserialize<List<F1Weekend>>(json, JsonOptions) ?? new List<F1Weekend>(),
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (FileNotFoundException)
+        {
+            return new List<F1Weekend>();
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Jolpica request failed: {ex}");
+            Debug.WriteLine($"Schedule cache read failed: {ex}");
             return new List<F1Weekend>();
         }
+    }
+
+    public async Task<List<F1Weekend>> FetchCurrentSeasonWeekendsAsync(CancellationToken cancellationToken = default)
+    {
+        var url = "https://api.jolpi.ca/ergast/f1/current.json";
+        using var timeoutCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCancellation.CancelAfter(TimeSpan.FromSeconds(3));
+        var response = await _httpClient.GetFromJsonAsync<JolpicaResponse>(url, timeoutCancellation.Token)
+            ?? throw new HttpRequestException("Jolpica returned an empty response.");
 
         if (response?.MRData?.RaceTable?.Races == null)
-            return new List<F1Weekend>();
+            throw new HttpRequestException("Jolpica returned no race data.");
 
         var weekends = new List<F1Weekend>();
 
@@ -69,7 +95,44 @@ public class F1Service
             nextSession.IsNext = true;
         }
 
+        try
+        {
+            await SaveCacheAsync(weekends, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Schedule cache write failed: {ex}");
+        }
         return weekends;
+    }
+
+    private static async Task SaveCacheAsync(List<F1Weekend> weekends, CancellationToken cancellationToken)
+    {
+        var cachePath = Path.Combine(FileSystem.Current.AppDataDirectory, CacheFileName);
+        var temporaryPath = $"{cachePath}.tmp";
+        var json = JsonSerializer.Serialize(weekends, JsonOptions);
+
+        try
+        {
+            await File.WriteAllTextAsync(temporaryPath, json, cancellationToken);
+            File.Move(temporaryPath, cachePath, true);
+        }
+        catch
+        {
+            try
+            {
+                if (File.Exists(temporaryPath))
+                {
+                    File.Delete(temporaryPath);
+                }
+            }
+            catch (IOException cleanupException)
+            {
+                Debug.WriteLine($"Schedule cache cleanup failed: {cleanupException}");
+            }
+
+            throw;
+        }
     }
 
     private static void AddSession(List<F1Session> list, string name, SessionDto? dto)
