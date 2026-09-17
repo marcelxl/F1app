@@ -180,9 +180,10 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             var networkAccess = Connectivity.Current.NetworkAccess;
             Debug.WriteLine($"[F1NET] Network status changed: {networkAccess}");
-            var hasInternet = networkAccess == NetworkAccess.Internet;
+            var isOffline = networkAccess == NetworkAccess.None;
+            IsOffline = isOffline;
 
-            if (!hasInternet)
+            if (isOffline)
             {
                 IsBusy = false;
                 return;
@@ -264,10 +265,11 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
     {
         Debug.WriteLine($"[F1NET] Network status changed: {e.NetworkAccess}");
-        var isOnline = e.NetworkAccess == NetworkAccess.Internet;
+        var isOffline = e.NetworkAccess == NetworkAccess.None;
+        var isOnline = !isOffline;
         MainThread.BeginInvokeOnMainThread(() =>
         {
-            IsOffline = !isOnline;
+            IsOffline = isOffline;
             if (isOnline)
             {
                 RefreshStatusText = string.Empty;
@@ -282,7 +284,9 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     private void SetRefreshFailureState()
     {
-        var isActuallyOffline = Connectivity.Current.NetworkAccess != NetworkAccess.Internet;
+        var networkAccess = Connectivity.Current.NetworkAccess;
+        var isActuallyOffline = networkAccess == NetworkAccess.None;
+        Debug.WriteLine($"[F1NET] Refresh failure evaluated with NetworkAccess={networkAccess}; IsOffline={isActuallyOffline}");
         MainThread.BeginInvokeOnMainThread(() =>
         {
             IsOffline = isActuallyOffline;
