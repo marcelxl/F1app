@@ -45,7 +45,17 @@ public class F1Service
         var url = "https://api.jolpi.ca/ergast/f1/current.json";
         using var timeoutCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutCancellation.CancelAfter(TimeSpan.FromSeconds(3));
-        var response = await _httpClient.GetFromJsonAsync<JolpicaResponse>(url, timeoutCancellation.Token)
+        var requestTask = _httpClient.GetFromJsonAsync<JolpicaResponse>(url, timeoutCancellation.Token);
+        var completedTask = await Task.WhenAny(
+            requestTask,
+            Task.Delay(TimeSpan.FromSeconds(3), cancellationToken)).ConfigureAwait(false);
+        if (completedTask != requestTask)
+        {
+            timeoutCancellation.Cancel();
+            throw new TimeoutException("Jolpica request exceeded the 3 second timeout.");
+        }
+
+        var response = await requestTask.ConfigureAwait(false)
             ?? throw new HttpRequestException("Jolpica returned an empty response.");
 
         if (response?.MRData?.RaceTable?.Races == null)

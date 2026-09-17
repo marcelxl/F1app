@@ -245,6 +245,11 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             LogNetworkFailure("Timeout", ex, null);
             SetRefreshFailureState();
         }
+        catch (TimeoutException ex)
+        {
+            LogNetworkFailure("Timeout", ex, null);
+            SetRefreshFailureState();
+        }
         catch (Exception ex)
         {
             LogNetworkFailure("Unexpected", ex, null);
