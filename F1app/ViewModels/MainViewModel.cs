@@ -21,6 +21,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool _syncStarted;
     private bool _isOfflineMode;
     private int _refreshInProgress;
+    private string _refreshStatusText = string.Empty;
     private IDispatcherTimer? _countdownTimer;
     private string _nextSessionTitle = string.Empty;
     private string _nextSessionTimeRemaining = string.Empty;
@@ -94,6 +95,20 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         private set => IsOfflineMode = value;
     }
 
+    public string RefreshStatusText
+    {
+        get => _refreshStatusText;
+        private set
+        {
+            if (_refreshStatusText == value) return;
+            _refreshStatusText = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsRefreshWarningVisible));
+        }
+    }
+
+    public bool IsRefreshWarningVisible => !string.IsNullOrWhiteSpace(RefreshStatusText);
+
     public F1Weekend? ActiveWeekend
     {
         get => _activeWeekend;
@@ -166,7 +181,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             var networkAccess = Connectivity.Current.NetworkAccess;
             Debug.WriteLine($"[F1NET] Network status changed: {networkAccess}");
             var hasInternet = networkAccess == NetworkAccess.Internet;
-            IsOfflineMode = !hasInternet && cachedData.Count > 0;
 
             if (!hasInternet)
             {
@@ -211,29 +225,30 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
                 }
 
                 IsOffline = false;
+                RefreshStatusText = string.Empty;
                 IsBusy = false;
                 Debug.WriteLine($"[F1PERF] Network update processed in {refreshStopwatch.ElapsedMilliseconds}ms");
             });
         }
         catch (HttpRequestException ex)
         {
-            Debug.WriteLine($"Schedule refresh failed: {ex.Message}");
-            SetOfflineAfterRefreshFailure();
+            LogNetworkFailure("HTTP", ex, ex.StatusCode?.ToString());
+            SetRefreshFailureState();
         }
         catch (SocketException ex)
         {
-            Debug.WriteLine($"Schedule network failure: {ex.Message}");
-            SetOfflineAfterRefreshFailure();
+            LogNetworkFailure("Socket/DNS", ex, null);
+            SetRefreshFailureState();
         }
         catch (TaskCanceledException ex)
         {
-            Debug.WriteLine($"Schedule refresh timed out: {ex.Message}");
-            SetOfflineAfterRefreshFailure();
+            LogNetworkFailure("Timeout", ex, null);
+            SetRefreshFailureState();
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Schedule refresh failed: {ex}");
-            SetOfflineAfterRefreshFailure();
+            LogNetworkFailure("Unexpected", ex, null);
+            SetRefreshFailureState();
         }
         finally
         {
@@ -245,7 +260,14 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         Debug.WriteLine($"[F1NET] Network status changed: {e.NetworkAccess}");
         var isOnline = e.NetworkAccess == NetworkAccess.Internet;
-        MainThread.BeginInvokeOnMainThread(() => IsOffline = !isOnline);
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            IsOffline = !isOnline;
+            if (isOnline)
+            {
+                RefreshStatusText = string.Empty;
+            }
+        });
 
         if (isOnline && _syncStarted)
         {
@@ -253,13 +275,24 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    private void SetOfflineAfterRefreshFailure()
+    private void SetRefreshFailureState()
     {
+        var isActuallyOffline = Connectivity.Current.NetworkAccess != NetworkAccess.Internet;
         MainThread.BeginInvokeOnMainThread(() =>
         {
-            IsOffline = true;
+            IsOffline = isActuallyOffline;
+            RefreshStatusText = isActuallyOffline
+                ? string.Empty
+                : "Planning kon niet worden vernieuwd";
             IsBusy = false;
         });
+    }
+
+    private static void LogNetworkFailure(string category, Exception exception, string? statusCode)
+    {
+        Debug.WriteLine(
+            $"[F1NET] {category} request failed. " +
+            $"StatusCode={statusCode ?? "none"}; Message={exception.Message}; Exception={exception}");
     }
 
     private void ApplySchedule(IEnumerable<F1Weekend> schedule)

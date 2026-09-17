@@ -54,6 +54,15 @@
              TextColor="#8E8E93"
              FontSize="11" />
 
+                <Label Grid.Row="1"
+                             Text="{Binding RefreshStatusText}"
+                             IsVisible="{Binding IsRefreshWarningVisible}"
+                             HorizontalOptions="End"
+                             VerticalOptions="Start"
+                             Margin="0,30,16,0"
+                             TextColor="#E8B86D"
+                             FontSize="11" />
+
         <CarouselView Grid.Row="1"
                       x:Name="RaceCarousel"
                       HorizontalOptions="Fill"
