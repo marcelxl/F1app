@@ -6,11 +6,12 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using F1app.Models;
 using F1app.Services;
+using Microsoft.Maui.Dispatching;
 using Microsoft.Maui.Networking;
 
 namespace F1app.ViewModels;
 
-public class MainViewModel : INotifyPropertyChanged
+public class MainViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly F1Service _service = new();
     private bool _isBusy;
@@ -20,10 +21,47 @@ public class MainViewModel : INotifyPropertyChanged
     private bool _syncStarted;
     private bool _isOfflineMode;
     private int _refreshInProgress;
+    private IDispatcherTimer? _countdownTimer;
+    private string _nextSessionTitle = string.Empty;
+    private string _nextSessionTimeRemaining = string.Empty;
+    private DateTimeOffset _targetSessionTime;
 
     public MainViewModel()
     {
         Connectivity.Current.ConnectivityChanged += OnConnectivityChanged;
+    }
+
+    public string NextSessionTitle
+    {
+        get => _nextSessionTitle;
+        private set
+        {
+            if (_nextSessionTitle == value) return;
+            _nextSessionTitle = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string NextSessionTimeRemaining
+    {
+        get => _nextSessionTimeRemaining;
+        private set
+        {
+            if (_nextSessionTimeRemaining == value) return;
+            _nextSessionTimeRemaining = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public DateTimeOffset TargetSessionTime
+    {
+        get => _targetSessionTime;
+        private set
+        {
+            if (_targetSessionTime == value) return;
+            _targetSessionTime = value;
+            OnPropertyChanged();
+        }
     }
 
     private ObservableCollection<F1Weekend> _weekends = new();
@@ -260,6 +298,94 @@ public class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(ReturnButtonText));
         OnPropertyChanged(nameof(CurrentWeekend));
         UpdateSelectedIndicator();
+        StartCountdown();
+    }
+
+    public void StartCountdown()
+    {
+        if (_countdownTimer == null)
+        {
+            _countdownTimer = Application.Current?.Dispatcher.CreateTimer();
+            if (_countdownTimer == null)
+            {
+                Debug.WriteLine("[F1COUNTDOWN] Dispatcher timer unavailable");
+                return;
+            }
+
+            _countdownTimer.Interval = TimeSpan.FromSeconds(1);
+            _countdownTimer.IsRepeating = true;
+            _countdownTimer.Tick += OnCountdownTick;
+        }
+
+        UpdateCountdown();
+        if (!_countdownTimer.IsRunning)
+        {
+            _countdownTimer.Start();
+        }
+    }
+
+    public void StopCountdown()
+    {
+        _countdownTimer?.Stop();
+    }
+
+    private void OnCountdownTick(object? sender, EventArgs e)
+    {
+        UpdateCountdown();
+    }
+
+    private void UpdateCountdown()
+    {
+        var now = DateTimeOffset.Now;
+        if (TargetSessionTime <= now || string.IsNullOrEmpty(NextSessionTitle))
+        {
+            if (!SelectNextSession(now))
+            {
+                NextSessionTitle = "Geen aankomende sessie";
+                NextSessionTimeRemaining = "--:--:--";
+                StopCountdown();
+                return;
+            }
+        }
+
+        var remaining = TargetSessionTime - now;
+        NextSessionTimeRemaining = FormatCountdown(remaining);
+        Debug.WriteLine($"[F1COUNTDOWN] {NextSessionTitle}: {NextSessionTimeRemaining}");
+    }
+
+    private bool SelectNextSession(DateTimeOffset now)
+    {
+        var next = Weekends
+            .SelectMany(weekend => weekend.Sessions.Select(session => new { weekend, session }))
+            .Select(item => new
+            {
+                item.weekend,
+                item.session,
+                Start = new DateTimeOffset(item.session.LocalStartTime)
+            })
+            .Where(item => item.Start > now)
+            .OrderBy(item => item.Start)
+            .FirstOrDefault();
+
+        if (next == null)
+        {
+            TargetSessionTime = default;
+            return false;
+        }
+
+        TargetSessionTime = next.Start;
+        NextSessionTitle = $"{next.weekend.GrandPrixName} - {next.session.Name}";
+        return true;
+    }
+
+    private static string FormatCountdown(TimeSpan remaining)
+    {
+        if (remaining.TotalDays >= 1)
+        {
+            return $"{remaining.Days}d {remaining.Hours:00}u {remaining.Minutes:00}m {remaining.Seconds:00}s";
+        }
+
+        return $"{Math.Max(0, (int)remaining.TotalHours):00}:{remaining.Minutes:00}:{remaining.Seconds:00}";
     }
 
     private bool AreSchedulesEqual(IReadOnlyList<F1Weekend> latest)
@@ -295,6 +421,18 @@ public class MainViewModel : INotifyPropertyChanged
         {
             Weekends[index].IsSelected = ReferenceEquals(Weekends[index], _currentWeekend);
         }
+    }
+
+    public void Dispose()
+    {
+        StopCountdown();
+        if (_countdownTimer != null)
+        {
+            _countdownTimer.Tick -= OnCountdownTick;
+            _countdownTimer = null;
+        }
+
+        Connectivity.Current.ConnectivityChanged -= OnConnectivityChanged;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

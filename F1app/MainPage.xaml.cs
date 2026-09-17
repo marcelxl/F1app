@@ -34,11 +34,18 @@ public partial class MainPage : ContentPage
         try
         {
             await _vm.InitializeAsync();
+            _vm.StartCountdown();
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"MainPage data initialization failed: {ex}");
         }
+    }
+
+    protected override void OnDisappearing()
+    {
+        _vm.StopCountdown();
+        base.OnDisappearing();
     }
 
     private void OnJumpToCurrentRaceClicked(object? sender, EventArgs e)

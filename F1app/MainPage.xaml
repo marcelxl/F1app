@@ -8,14 +8,44 @@
              Shell.NavBarIsVisible="False"
              BackgroundColor="#121212">
 
-    <Grid RowDefinitions="*, Auto, Auto">
+    <Grid RowDefinitions="Auto, *, Auto, Auto">
         <ActivityIndicator IsRunning="{Binding IsBusy}"
                            IsVisible="{Binding IsBusy}"
                            HorizontalOptions="Center"
                            VerticalOptions="Center"
                            Color="#E10600" />
 
-         <Label Grid.Row="0"
+        <Border Grid.Row="0"
+                Margin="16,12,16,8"
+                Padding="14,10"
+                Background="#1E1E1E"
+                Stroke="#E10600"
+                StrokeThickness="1"
+                StrokeShape="RoundRectangle 14">
+            <Grid RowDefinitions="Auto, Auto" ColumnDefinitions="*, Auto">
+                <Label Text="VOLGENDE SESSIE"
+                       TextColor="#E10600"
+                       FontAttributes="Bold"
+                       FontSize="11"
+                       CharacterSpacing="2" />
+                <Label Grid.Row="1"
+                       Text="{Binding NextSessionTitle}"
+                       TextColor="White"
+                       FontAttributes="Bold"
+                       FontSize="15"
+                       LineBreakMode="TailTruncation" />
+                <Label Grid.Column="1"
+                       Grid.RowSpan="2"
+                       Text="{Binding NextSessionTimeRemaining}"
+                       TextColor="#00FF7F"
+                       FontAttributes="Bold"
+                       FontSize="20"
+                       HorizontalTextAlignment="End"
+                       VerticalTextAlignment="Center" />
+            </Grid>
+        </Border>
+
+         <Label Grid.Row="1"
              Text="Offline modus"
              IsVisible="{Binding IsOfflineMode}"
              HorizontalOptions="End"
@@ -24,7 +54,7 @@
              TextColor="#8E8E93"
              FontSize="11" />
 
-        <CarouselView Grid.Row="0"
+        <CarouselView Grid.Row="1"
                       x:Name="RaceCarousel"
                       HorizontalOptions="Fill"
                       ItemsSource="{Binding Weekends}"
@@ -190,7 +220,7 @@
             </CarouselView.ItemTemplate>
         </CarouselView>
 
-        <Button Grid.Row="1"
+        <Button Grid.Row="2"
                 Text="{Binding ReturnButtonText}"
                 IsVisible="{Binding IsJumpToCurrentRaceVisible}"
                 Clicked="OnJumpToCurrentRaceClicked"
@@ -205,7 +235,7 @@
                 VerticalOptions="End"
                 Margin="0,0,0,32" />
 
-            <HorizontalStackLayout Grid.Row="2"
+            <HorizontalStackLayout Grid.Row="3"
                                HorizontalOptions="Center"
                                Padding="0,0,0,16"
                                BindableLayout.ItemsSource="{Binding Weekends}"
